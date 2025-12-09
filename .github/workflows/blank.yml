@@ -66,11 +66,11 @@ jobs:
           ]
           "@
           $config | Out-File -FilePath $HOME\.dding\config.json -Encoding utf8
-          
+            
       - name: Set up JDK 8 (OpenJDK)
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu' # 选择OpenJDK发行版,这里用temurin(建议,官方推荐)
+          distribution: 'zulu' # 选择OpenJDK发行版，这里用temurin（建议，官方推荐）
           java-version: '8'
 
       - name: Check Java version
@@ -81,13 +81,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: show payload
-        run: |
-          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
           
       - name: Cache SSH known hosts
         id: cache-ssh-hosts
@@ -97,6 +90,15 @@ jobs:
           key: ssh-known-hosts-${{ runner.os }}-v1
           restore-keys: |
             ssh-known-hosts-${{ runner.os }}-
+            
+      - name: show payload
+        run: |
+          echo "Client payload: ${{ toJson(github.event.client_payload) }}"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+
       - name: Add Gitee ssh-key to known hosts
         shell: bash
         run: |
@@ -106,6 +108,21 @@ jobs:
             gitee.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMuEoYdx6to5oxR60IWj8uoe1aI0X1fKOHWOtLqTg1tsLT1iFwXV5JmFjU46EzeMBV/6EmI1uaRI6HiEPtPtJHE=
             gitee.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEKxHSJ7084RmkJ4YdEi5tngynE8aZe2uEoVVsB/OvYN
           Eof
+      - name: Set up Node.js v16.0.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16.14.0'
+
+      - name: git clone 
+        run: |
+          echo "pwd111"
+          echo ${PWD}
+          git clone ${{ github.event.client_payload.gitaddress }}
+          git clone git@gitee.com:charlesabc/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
+          ls ./${{ github.event.client_payload.project_name }}
+          echo "pwd"
+          echo ${PWD}
+
       - name: Get current branch name
         id: get_branch
         run: |
@@ -120,17 +137,22 @@ jobs:
           echo "==========="
           echo $(git rev-parse --abbrev-ref HEAD)
           echo "==========="
-      - name: git clone 
-        run: |
-          git clone ${{ github.event.client_payload.gitaddress }}
-          git clone git@gitee.com:charlesabc/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
-          ls ./${{ github.event.client_payload.project_name }}
+
+
       - name: Generate JENKINS.env
         run: |
           echo "export BRANCH=$BRANCH " >> $WORK_ROOT_DIR/.JENKINS.env
           echo "export UTILS_DIR=$UTILS_DIR" >> $WORK_ROOT_DIR/.JENKINS.env
           echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $WORK_ROOT_DIR/.JENKINS.env
-          cat $WORK_ROOT_DIR/.JENKINS.env
+          cat $WORK_ROOT_DIR/.JENKINS.env           
+        working-directory: ./${{ github.event.client_payload.project_name }}
+
+      # - name: Setup Debug Session
+      #   uses: mxschmitt/action-tmate@v3
+      #   timeout-minutes: 15
+      #   with:
+      #     detached: true
+      
       - name: Build and Deploy
         run: |
           pushd .
