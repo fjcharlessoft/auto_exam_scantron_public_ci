@@ -179,6 +179,6 @@ jobs:
           
           # 部署到测试环境
           
-          sh  ${WORKSPACE}/myutils/auto_exam/scantron/scripts/develop/deploy_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
+          # sh  ${WORKSPACE}/myutils/auto_exam/scantron/scripts/develop/deploy_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
           
           sh  ${WORKSPACE}/myutils/auto_exam/scantron/scripts/maixiao/deploy_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
