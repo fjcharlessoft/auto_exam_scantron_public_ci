@@ -118,7 +118,8 @@ jobs:
           echo "pwd111"
           echo ${PWD}
           git clone ${{ github.event.client_payload.gitaddress }}
-          git clone git@gitee.com:charlesabc/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
+          # git clone git@gitee.com:charlesabc/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
+          git clone git@github.com:charlessoft/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
           ls ./${{ github.event.client_payload.project_name }}
           echo "pwd"
           echo ${PWD}
