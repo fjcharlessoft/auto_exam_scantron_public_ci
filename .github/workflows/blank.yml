@@ -6,7 +6,7 @@ name: CI
 on:
   repository_dispatch:
     types:
-      - auto_exam_scantron-web_public_ci
+      - auto_exam_scantron_public_ci
   push:
     branches: [ '*' ]
   pull_request:
@@ -216,4 +216,4 @@ jobs:
           ##sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/maixiao/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
           
           # 观澜
-          #sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/guanlan/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/guanlan/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
