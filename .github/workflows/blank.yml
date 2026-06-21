@@ -1,3 +1,4 @@
+
 # This is a basic workflow to help you get started with Actions
 
 name: CI
@@ -97,44 +98,31 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.11'
-          
-      # - name: Set up Python 2.7
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '2.7'
-      #   continue-on-error: true  # Python 2.7 可能不可用
 
-  
-      - name: Add GitHub and Gitee ssh-key to known hosts
+      - name: Add Gitee ssh-key to known hosts
         shell: bash
         run: |
-          mkdir -p "$HOME/.ssh"
-          ssh-keyscan github.com >> "$HOME/.ssh/known_hosts"
-          ssh-keyscan gitee.com >> "$HOME/.ssh/known_hosts"
-          
+          mkdir -p $HOME/.ssh
+          cat >$HOME/.ssh/known_hosts <<Eof
+            gitee.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMzG3r+88lWSDK9fyjcZmYsWGDBDmGoAasKMAmjoFloGt9HRQX2Qp4f9FY2XK/hsHYinvoh5Xytl9iaUNUWMfYR8q6VEMtOO87DgoAFcfKZHt0/nbAg9RoNTKYt6v8tPwYpr7N0JP/01nE4LFsNDnstr6H0bXSAzbKWCETLZfdPV4l2uSpRn3bU0ugoZ0aSKz5Dc/IloBfGCTvkSsxUydMRd/Chpjt6VxncDbp+Fa6pzsseK8OQzrg6Fgc5783EN3EQqZ2skqyCwExtx95BJlfx1B3luZnWfpkwNDnrZRT/Qx0OrWqyf0q6f9uQr+UG1S8qDcUn3e/9onq3rwBri8/
+            gitee.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMuEoYdx6to5oxR60IWj8uoe1aI0X1fKOHWOtLqTg1tsLT1iFwXV5JmFjU46EzeMBV/6EmI1uaRI6HiEPtPtJHE=
+            gitee.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEKxHSJ7084RmkJ4YdEi5tngynE8aZe2uEoVVsB/OvYN
+          Eof
       - name: Set up Node.js v16.0.0
         uses: actions/setup-node@v4
         with:
-          node-version: '14.x'
-          architecture: 'x64'  # 关键：强制使用 x64
-          
-
-          
-          # node-version: '16.14.0'
+          node-version: '16.14.0'
 
       - name: git clone 
         run: |
-          # git clone ${{ github.event.client_payload.gitaddress }}
-          echo ${{ github.event.client_payload.raw_branch }}
-          echo ${{ github.event.client_payload.BRANCH_NAME }}
-          git clone -b ${{ github.event.client_payload.BRANCH_NAME }} ${{ github.event. client_payload.gitaddress }}
-          git clone git@github.com:charlessoft/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
-
+          echo "pwd111"
+          echo ${PWD}
+          git clone ${{ github.event.client_payload.gitaddress }}
           # git clone git@gitee.com:charlesabc/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
+          git clone git@github.com:charlessoft/myutils.git ./${{ github.event.client_payload.project_name }}/myutils
           ls ./${{ github.event.client_payload.project_name }}
           echo "pwd"
           echo ${PWD}
-
           # echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
           # echo "BRANCH_NAME=master" >> $GITHUB_ENV
           
@@ -146,13 +134,12 @@ jobs:
           echo "WORK_ROOT_DIR=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
           echo "WORKSPACE=${PWD}/${{github.event.client_payload.project_name}}" >> $GITHUB_ENV
           echo "JENKINS_ENV_PATH=${PWD}/${{github.event.client_payload.project_name}}/.JENKINS.env" >> $GITHUB_ENV
+          echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
           echo "RELEASE_PACKAGE=123.60.164.114" >> $GITHUB_ENV 
           echo "JAVA_SSO_PACKAGE=sso-1.0.1.jar"  >> $GITHUB_ENV
-          echo "ISDEBUG=${{github.event.client_payload.isdebug}}" >> $GITHUB_ENV
-
-          # echo "==========="
-          # echo $(git rev-parse --abbrev-ref HEAD)
-          # echo "==========="
+          echo "==========="
+          echo $(git rev-parse --abbrev-ref HEAD)
+          echo "==========="
 
 
       - name: Generate JENKINS.env
@@ -160,7 +147,6 @@ jobs:
           echo "export BRANCH=$BRANCH " >> $WORK_ROOT_DIR/.JENKINS.env
           echo "export UTILS_DIR=$UTILS_DIR" >> $WORK_ROOT_DIR/.JENKINS.env
           echo "export WORK_ROOT_DIR=$WORK_ROOT_DIR" >> $WORK_ROOT_DIR/.JENKINS.env
-          
           if [ "$ISDEBUG" = "true" ]; then
             echo "============ JENKINS.env Content ============"
             cat $WORK_ROOT_DIR/.JENKINS.env
@@ -173,47 +159,27 @@ jobs:
       #   timeout-minutes: 15
       #   with:
       #     detached: true
-
-      - name: build
+      
+      - name: Build and Deploy
         run: |
           pushd .
           cd ${UTILS_DIR}
           source utils.sh
           popd 
 
-          NODE22_CELLAR_ROOT="/opt/homebrew/Cellar/node@22"
-          if [ -d "$NODE22_CELLAR_ROOT" ]; then
-            NODE22_DIR="$(find "$NODE22_CELLAR_ROOT" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
-            if [ -n "$NODE22_DIR" ] && [ -d "$NODE22_DIR" ]; then
-              mv "$NODE22_DIR" "${NODE22_DIR}_bak"
-            else
-              echo "No installed node@22 directory found under $NODE22_CELLAR_ROOT, skipping rename."
-            fi
-          else
-            echo "$NODE22_CELLAR_ROOT does not exist, skipping rename."
-          fi
-
-
-          npm config set registry https://registry.npmmirror.com
-
-          # 设置 node-gyp 的 disturl 为新镜像
-          npm config set disturl https://npmmirror.com/mirrors/node
+          
+          echo "===============>sso prepare<========================="
+          find ${WORKSPACE}/myutils/auto_exam/scantron/scripts/ -name "*.sh" -exec docuinx {} \;
+          
+          sh ${WORKSPACE}/myutils/auto_exam/scantron/scripts/build_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
           
           
           
-          find ${WORKSPACE}/myutils/auto_exam/ -name "*.sh" -exec dos2unix {} \;
+          # 发布到资源服务器
+          sh  ${WORKSPACE}/myutils/auto_exam/scantron/scripts/publish_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
           
+          # 部署到测试环境
           
-          sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/build_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          # sh  ${WORKSPACE}/myutils/auto_exam/scantron/scripts/develop/deploy_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
           
-          
-          sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/publish_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
-
-
-          # 部署
-          sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/develop/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
-          # 麦小
-          ##sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/maixiao/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
-          
-          # 观澜
-          sh ${WORKSPACE}/myutils/auto_exam/scantron-web/scripts/guanlan/deploy_web.sh ${JENKINS_ENV_PATH} || CheckLastResult
+          sh  ${WORKSPACE}/myutils/auto_exam/scantron/scripts/maixiao/deploy_server.sh  ${JENKINS_ENV_PATH} || CheckLastResult
